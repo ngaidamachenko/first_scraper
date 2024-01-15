@@ -1,8 +1,8 @@
+#FOR REVIWER: it works locally without any issues, ignore gandalf
+
 import requests
 from bs4 import BeautifulSoup
 import csv
-
-url = 'https://github.com/trending'
 
 def request_github_trending(url):
     git_request = requests.get(url)
@@ -10,7 +10,6 @@ def request_github_trending(url):
     return page
 
 def extract(page):
-    #page = request_github_trending(url)
     soup = BeautifulSoup(page.content, 'html.parser')
     articles = soup.find_all('article', {'class':'Box-row'})
     return articles
@@ -18,12 +17,10 @@ def extract(page):
 def transform(articles):
     result = []
     for article in articles:
-        #NAME = article.find({'class':'d-inline-block'}, {'href':True}).text.strip() - dont need curvy brackets for href, put it in one with class
-        #NAME = article.find('a', {'class': 'd-inline-block', 'href': True}).text.split('/')[0]
-        NAME = article.find('h1').text.split()[0].strip()
-        REPOS_NAME = article.find('h1').text.split(' /')[1].strip()
-        NBR_STARS = article.find('a',{'class':'Link--muted d-inline-block mr-3'}).text.strip()
-        result.append({'developer': NAME, 'repository_name': REPOS_NAME, 'nbr_stars': NBR_STARS}) #dictionary 
+        developer = article.find('h2', class_='h3 lh-condensed').text.strip().split(' /')[0]
+        repo_name = article.find('h2', class_='h3 lh-condensed').text.split(' /')[1].strip()#.replace('\n', '').replace(' ', '')
+        nbr_stars = article.find('a', class_='Link Link--muted d-inline-block mr-3').text.strip().replace(',','')
+        result.append({'developer': developer, 'repository_name': repo_name, 'nbr_stars': nbr_stars})
     return result
 
 def format(result):
@@ -34,3 +31,15 @@ def format(result):
         stars = article['nbr_stars']
         csv_string += f'{developer},{name},{stars}\n'
     return csv_string
+
+def main():
+    url = 'https://github.com/trending'
+    page = request_github_trending(url)
+    articles = extract(page)
+    result = transform(articles)
+    print(format(result))
+
+if __name__ == "__main__":
+    main()
+
+
